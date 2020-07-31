@@ -1,0 +1,28 @@
+-
+  name: DeInstall Mysql on db2
+  hosts: db2
+  become: true
+  become_method: sudo
+  tasks:
+  #- name: Install MySQL 5.7 repo
+  #  yum: name=http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm state=present
+  - name: Stop the MySQL service
+    service: name=mysqld state=stopped enabled=false
+
+  - name: De-installing MYSQL 5.7 on host db2
+    yum: name={{item}} state=absent
+    with_items:
+     - mysql-community-server
+     - mysql-community-client
+     - MySQL-python
+
+  - name: Remove directories
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /etc/mysql
+      - /var/lib/mysql
+      - /var/log/mysql
+      - /home/dba/.my.cnf
+      - /var/log/mysqld.log

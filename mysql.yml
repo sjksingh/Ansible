@@ -1,0 +1,65 @@
+
+-
+  name: Install Mysql on db2
+  hosts: db2
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Install MySQL 5.7 repo
+    yum: name=http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm state=present
+  - name: Installing MYSQL 5.7 on host db2
+    yum: name={{item}} state=installed
+    with_items:
+     - mysql-community-server
+     - mysql-community-client
+     - MySQL-python
+
+  - name: Start the MySQL service
+    service: name=mysqld state=started enabled=true
+
+  - name: Find MySQL root password
+    shell: "echo `grep 'temporary.*root@localhost' /var/log/mysqld.log | sed 's/.*root@localhost: //'`"
+    register: mysql_root_pass
+  - debug: var=mysql_root_pass.stdout
+
+#  - name: Generate new root password
+#    command: openssl rand -base64 32
+#    register: mysql_new_root_pass
+  # If /home/dba/.my.cnf doesn't exist and the command is run
+#  - debug: msg="New root password is {{ mysql_new_root_pass.stdout }}"
+#    when: mysql_new_root_pass.changed
+  # If /home/dba/.my.cnf exists and the command is not run
+#  - debug: msg="No change to root password"
+#    when: not mysql_root_pass.changed
+
+  - name: Change Mysql root password
+    shell: mysql -uroot -p"{{ mysql_root_pass.stdout }}" --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_pass.stdout }}'; flush privileges; "
+  - name: Output new root password
+    debug: msg="New root password is {{mysql_root_pass.stdout}}"
+
+  - name: Create .my.cnf for password less login non-root
+    template: src=my.cnf dest=/home/dba/.my.cnf
+  - name: Create .my.cnf for password less login root
+    template: src=my.cnf dest=/root/.my.cnf
+
+
+  # now lets configure db for mysql binlog
+  - name: Create log_bin directory
+    file: path=/var/log/mysql state=directory owner=mysql group=mysql
+ # Place custom db server config file
+  - name: Create target directory
+    file: path=/etc/mysql state=directory owner=root
+  - name: Copy server config file to db2
+    template: src=server.cnf dest=/etc/mysql/my.cnf
+
+  ## Create replication user
+  - name: Create db user for replication
+    mysql_user:
+       name: replication
+       password: KafBAR9/LdbWu+Z7Q2g=
+       host: "%"
+       priv: "*.*:REPLICATION CLIENT"
+       state: present
+
+  - name: ReStart the MySQL service
+    service: name=mysqld state=restarted enabled=yes

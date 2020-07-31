@@ -1,0 +1,21 @@
+-
+  #ansible-playbook percona-xtrabackup.yml --tags "tag,tag" --ask-become-pass -i inventory.txt
+  name: percona xtrabackup 8.0
+  hosts: db2
+  become: true
+  become_method: sudo
+  tasks:
+  - name: UnInstalling xtrabackup
+    yum: name={{ item }} state=absent
+    with_items:
+      - https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+      - percona-xtrabackup-80
+    tags:
+      - remove
+  - name: Installing xtrabackup
+    yum: name={{ item }} state=latest
+    with_items:
+      - https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+      - percona-xtrabackup-80
+    tags:
+      - install

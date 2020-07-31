@@ -1,0 +1,13 @@
+-
+  name: Copy server config to db2
+  hosts: db2
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Create db user for replication
+    mysql_user:
+     name: replication
+     password: KafBAR9/LdbWu+Z7Q2g=
+     host: "%"
+     priv: "*.*:REPLICATION CLIENT"
+     state: present

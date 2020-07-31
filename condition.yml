@@ -1,0 +1,20 @@
+-
+  hosts: db2
+  become: true
+  user: dba
+  connection: ssh
+
+  tasks:
+  - name: Install htop
+    yum: name={{ item }} state=latest
+    with_items:
+     - htop
+     - iotop
+  #when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+#  - name: restart httpd
+#    service:
+#      name: httpd
+#      state: started
+#      enabled: yes
+  #  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
